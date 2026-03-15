@@ -359,7 +359,7 @@ textarea.ans{min-height:52px;line-height:1.6}
 .pc-body-v2{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .pc-overlay-hint{font-size:12.5px;color:var(--muted);line-height:1.5;font-style:italic}
 .pc-overlay-wrap{position:relative;border:1.5px solid var(--rule);border-radius:6px;overflow:hidden;background:#fefcff;display:block}
-.pc-overlay-svg{display:block;width:100%;height:auto}
+.pc-overlay-svg{display:block;width:100%;height:auto;max-height:min(50vh,480px)}
 .pc-overlay-wrap canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
 .pc-questions{display:flex;flex-direction:column;gap:10px;padding:10px 14px;background:var(--lav);border-radius:5px}
 .pc-q{display:flex;flex-direction:column;gap:5px}
@@ -369,7 +369,7 @@ textarea.ans{min-height:52px;line-height:1.6}
 .mol-overlay-outer{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
 .mol-overlay-hint{font-size:12px;color:var(--muted);font-style:italic}
 .mol-overlay-wrap{position:relative;border:1.5px solid var(--rule);border-radius:6px;overflow:hidden;background:#fefcff}
-.mol-overlay-svg{display:block;width:100%;height:auto}
+.mol-overlay-svg{display:block;width:100%;height:auto;max-height:min(52vh,460px)}
 .mol-overlay-wrap canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
 .ref-body{display:flex;gap:14px;padding:14px;align-items:flex-start}
 .ref-sidebar{width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:6px}
@@ -1452,6 +1452,7 @@ function positionVseprTab(){
 }
 window.addEventListener('scroll', positionVseprTab, {passive:true});
 window.addEventListener('resize', positionVseprTab);
+window.addEventListener('resize', ()=>syncAllOverlayHeights());
 window.addEventListener('load',   positionVseprTab);
 
 // ── BOND DATA (Section 1) ──
@@ -1526,7 +1527,7 @@ function unlockPIN(){
       if(el) el.classList.add('shown');
     });
     // Re-sync canvases that were 0-height while ref-reveals were hidden
-    setTimeout(()=>{mols.forEach(m=>syncCanvasSize(m.id));syncCanvasSize('ch3cl');},400);
+    setTimeout(()=>{mols.forEach(m=>syncCanvasSize(m.id));syncCanvasSize('ch3cl');syncAllOverlayHeights();},400);
     // Unlock sections 5 and 6
     ['sec5Overlay','sec6Overlay'].forEach(id=>{
       const el = document.getElementById(id);
@@ -1947,7 +1948,19 @@ function getOverlayDims(wrapId){
   return{pw:Math.round((w.offsetWidth||500)*dpr),ph:Math.round((w.offsetHeight||300)*dpr),dpr};
 }
 
-// Stub kept so calls from unlockPIN/restoreAll don't throw — now a no-op for overlays
+// Sync overlay wrapper height to actual rendered SVG height (after CSS max-height clamps it)
+function syncOverlayHeight(id){
+  const w=document.getElementById('wrap-'+id);
+  if(!w)return;
+  const svg=w.querySelector('svg');
+  if(!svg)return;
+  const h=svg.getBoundingClientRect().height;
+  if(h>0) w.style.height=h+'px';
+}
+function syncAllOverlayHeights(){
+  mols.forEach(m=>syncOverlayHeight(m.id));
+  ['p1','p2','pracBond','pracBond2','ch3cl'].forEach(id=>syncOverlayHeight(id));
+}
 function syncCanvasSize(id){
   const c=document.getElementById('canvas-'+id);
   const w=document.getElementById('wrap-'+id);
