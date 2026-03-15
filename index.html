@@ -1129,7 +1129,7 @@ textarea.ans{min-height:52px;line-height:1.6}
         <span class="mol-formula">CH₃Cl</span>
         <span class="mol-name">Chloromethane</span>
         <div class="mol-geo-wrap">
-          <span class="geo-lbl">Geometry</span>
+          <span class="geo-lbl">Molecular Geometry</span>
           <select class="geo-sel ss" id="geo-ch3cl"><option value="">— select —</option><option value="linear">Linear</option><option value="trigonal planar">Trigonal planar</option><option value="tetrahedral">Tetrahedral</option><option value="trigonal pyramidal">Trigonal pyramidal</option><option value="bent">Bent</option><option value="octahedral">Octahedral</option><option value="square pyramidal">Square pyramidal</option><option value="square planar">Square planar</option></select>
           <span class="geo-lbl" style="margin-left:8px">Bond Angle</span>
           <select class="geo-sel ss" id="ang-ch3cl"><option value="">— select —</option><option value="180°">180°</option><option value="120°">120°</option><option value="109.5°">109.5°</option><option value="107°">~107°</option><option value="104.5°">~104.5°</option><option value="90°">90°</option><option value="85° / 90°">85° / 90°</option></select>
@@ -1389,7 +1389,7 @@ textarea.ans{min-height:52px;line-height:1.6}
 <!-- ═══ VSEPR REFERENCE DRAWER ═══ -->
 <button class="vsepr-drawer-tab" id="vseprTab" onclick="toggleVSEPR()" title="VSEPR Reference Table">
   <span class="vdt-icon">📐</span>
-  <span class="vdt-label">VSEPR</span>
+  <span class="vdt-label">VSEPR Reference Table</span>
 </button>
 
 <div class="vsepr-drawer" id="vseprDrawer">
@@ -1766,8 +1766,7 @@ mols.forEach(m => {
       <span class="mol-formula">${m.formula}</span>
       <span class="mol-name">${m.name}</span>
       <div class="mol-geo-wrap">
-        <span class="geo-lbl">Geometry</span>
-        <select class="geo-sel ss" id="geo-${m.id}"><option value="">— select —</option><option value="linear">Linear</option><option value="trigonal planar">Trigonal planar</option><option value="tetrahedral">Tetrahedral</option><option value="trigonal pyramidal">Trigonal pyramidal</option><option value="bent">Bent</option><option value="octahedral">Octahedral</option><option value="square pyramidal">Square pyramidal</option><option value="square planar">Square planar</option></select>
+        <span class="geo-lbl">Molecular Geometry</span><option value="">— select —</option><option value="linear">Linear</option><option value="trigonal planar">Trigonal planar</option><option value="tetrahedral">Tetrahedral</option><option value="trigonal pyramidal">Trigonal pyramidal</option><option value="bent">Bent</option><option value="octahedral">Octahedral</option><option value="square pyramidal">Square pyramidal</option><option value="square planar">Square planar</option></select>
         <span class="geo-lbl" style="margin-left:8px">Bond Angle</span>
         <select class="geo-sel ss" id="ang-${m.id}"><option value="">— select —</option><option value="180°">180°</option><option value="120°">120°</option><option value="109.5°">109.5°</option><option value="107°">~107°</option><option value="104.5°">~104.5°</option><option value="90°">90°</option><option value="85° / 90°">85° / 90°</option></select>
       </div>
