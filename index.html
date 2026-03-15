@@ -1937,13 +1937,14 @@ document.querySelectorAll('input[name="cancel-ch3cl"], input[name="polar-ch3cl"]
 // This means the buffer never needs to resize, eliminating all black-canvas timing bugs
 function getOverlayDims(wrapId){
   const w=document.getElementById(wrapId);
-  if(!w)return{pw:500,ph:300};
+  const dpr=Math.min(window.devicePixelRatio||1,2); // cap at 2× for file size balance
+  if(!w)return{pw:500*dpr,ph:300*dpr,dpr};
   const svg=w.querySelector('svg');
   if(svg){
     const vb=svg.getAttribute('viewBox');
-    if(vb){const p=vb.split(/\s+/);return{pw:+p[2]||500,ph:+p[3]||300};}
+    if(vb){const p=vb.split(/\s+/);return{pw:Math.round((+p[2]||500)*dpr),ph:Math.round((+p[3]||300)*dpr),dpr};}
   }
-  return{pw:w.offsetWidth||500,ph:w.offsetHeight||300};
+  return{pw:Math.round((w.offsetWidth||500)*dpr),ph:Math.round((w.offsetHeight||300)*dpr),dpr};
 }
 
 // Stub kept so calls from unlockPIN/restoreAll don't throw — now a no-op for overlays
@@ -1961,7 +1962,7 @@ function getPos(e,c){const r=c.getBoundingClientRect(),sx=c.width/r.width,sy=c.h
 function getPosT(e,c){const t=e.touches[0],r=c.getBoundingClientRect(),sx=c.width/r.width,sy=c.height/r.height;return{x:(t.clientX-r.left)*sx,y:(t.clientY-r.top)*sy}}
 
 function startDraw(id,p){const s=canvasState[id];if(!s)return;s.drawing=true;s.last=p;const c=document.getElementById('canvas-'+id);s.history.push(c.toDataURL());if(s.history.length>40)s.history.shift()}
-function doDraw(id,p){const s=canvasState[id];if(!s||!s.drawing)return;const c=document.getElementById('canvas-'+id),ctx=c.getContext('2d');const w=document.getElementById('wrap-'+id);const isOverlay=w&&(w.classList.contains('pc-overlay-wrap')||w.classList.contains('mol-overlay-wrap'));ctx.beginPath();if(s.tool==='eraser'){if(isOverlay){ctx.globalCompositeOperation='destination-out';ctx.strokeStyle='rgba(0,0,0,1)';}else{ctx.globalCompositeOperation='source-over';ctx.strokeStyle='#fff';}ctx.lineWidth=s.size*3;}else{ctx.globalCompositeOperation='source-over';ctx.strokeStyle=s.color;ctx.lineWidth=s.size;}ctx.lineCap='round';ctx.lineJoin='round';ctx.moveTo(s.last.x,s.last.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.globalCompositeOperation='source-over';s.last=p;s.hasContent=true;const ph=document.getElementById('ph-'+id);if(ph)ph.style.display='none'}
+function doDraw(id,p){const s=canvasState[id];if(!s||!s.drawing)return;const c=document.getElementById('canvas-'+id),ctx=c.getContext('2d');ctx.imageSmoothingEnabled=true;const w=document.getElementById('wrap-'+id);const isOverlay=w&&(w.classList.contains('pc-overlay-wrap')||w.classList.contains('mol-overlay-wrap'));ctx.beginPath();if(s.tool==='eraser'){if(isOverlay){ctx.globalCompositeOperation='destination-out';ctx.strokeStyle='rgba(0,0,0,1)';}else{ctx.globalCompositeOperation='source-over';ctx.strokeStyle='#fff';}ctx.lineWidth=s.size*3;}else{ctx.globalCompositeOperation='source-over';ctx.strokeStyle=s.color;ctx.lineWidth=s.size;}ctx.lineCap='round';ctx.lineJoin='round';ctx.moveTo(s.last.x,s.last.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.globalCompositeOperation='source-over';s.last=p;s.hasContent=true;const ph=document.getElementById('ph-'+id);if(ph)ph.style.display='none'}
 function endDraw(id){const s=canvasState[id];if(s&&s.drawing){s.drawing=false;saveAll()}}
 function setTool(id,t){const s=canvasState[id];if(!s)return;s.tool=t;document.getElementById('pen-'+id).classList.toggle('act',t==='pen');document.getElementById('era-'+id).classList.toggle('act',t==='eraser')}
 function setSize(id,sz,btn){const s=canvasState[id];if(!s)return;s.size=sz;['sz1','sz2','sz3'].forEach(k=>{const el=document.getElementById(k+'-'+id);if(el)el.classList.remove('act')});btn.classList.add('act')}
@@ -1975,11 +1976,17 @@ function initCanvas(id){
   if(!c||!w)return;
   const isOverlay=w.classList.contains('pc-overlay-wrap')||w.classList.contains('mol-overlay-wrap');
   if(isOverlay){
-    // Fixed buffer = SVG viewBox dims. CSS scales display. Never resizes → no black canvas.
-    const {pw,ph}=getOverlayDims('wrap-'+id);
+    // Buffer = SVG viewBox × DPR for crisp rendering. CSS scales display.
+    const {pw,ph,dpr}=getOverlayDims('wrap-'+id);
     c.width=pw; c.height=ph;
+    // Store DPR on canvasState for consistent coordinate scaling
+    canvasState[id]=canvasState[id]||{};
+    canvasState[id]._dpr=dpr;
   } else {
-    c.width=w.offsetWidth||640; c.height=180;
+    const dpr2=Math.min(window.devicePixelRatio||1,2);
+    const initW=(w.offsetWidth||640)*dpr2;
+    c.width=initW; c.height=180*dpr2;
+    c.style.width=(w.offsetWidth||640)+'px'; c.style.height='180px';
     let raf=null,prevW=0;
     new ResizeObserver(entries=>{
       if(raf)cancelAnimationFrame(raf);
@@ -1987,7 +1994,8 @@ function initCanvas(id){
         const nw=entries[0].contentRect.width;
         if(Math.abs(nw-prevW)<1)return; prevW=nw;
         const snap=c.toDataURL('image/png');
-        c.width=nw;
+        const dprN=Math.min(window.devicePixelRatio||1,2);
+        c.width=Math.round(nw*dprN); c.style.width=nw+'px';
         const img=new Image();img.onload=()=>c.getContext('2d').drawImage(img,0,0,c.width,c.height);img.src=snap;
       });
     }).observe(w);
@@ -2107,8 +2115,11 @@ async function restoreAll(){
     return new Promise(res=>{
       const img=new Image();
       img.onload=()=>{
-        c.getContext('2d').clearRect(0,0,c.width,c.height);
-        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        const ctx=c.getContext('2d');
+        ctx.imageSmoothingEnabled=true;
+        ctx.imageSmoothingQuality='high';
+        ctx.clearRect(0,0,c.width,c.height);
+        ctx.drawImage(img,0,0,c.width,c.height);
         const ph=document.getElementById('ph-'+id);
         if(ph)ph.style.display='none';
         if(canvasState[id])canvasState[id].hasContent=true;
