@@ -2297,14 +2297,83 @@ function resetAll(){
   saveAll();
 }
 
-function submitWork(){
+// Composite SVG diagram + drawing canvas into a single PNG data URL
+function compositeMolImage(molId){
+  return new Promise(resolve=>{
+    const wrap = document.getElementById('wrap-'+molId);
+    if(!wrap){resolve(null);return;}
+    const svg  = wrap.querySelector('svg');
+    const cvs  = document.getElementById('canvas-'+molId);
+    if(!svg){resolve(cvs?cvs.toDataURL('image/png'):null);return;}
+
+    // Get SVG dimensions from viewBox
+    const vb  = (svg.getAttribute('viewBox')||'0 0 260 200').split(/\s+/);
+    const svgW = +vb[2]||260, svgH = +vb[3]||200;
+    const dpr  = Math.min(window.devicePixelRatio||1,2);
+    const bw   = Math.round(svgW*dpr), bh = Math.round(svgH*dpr);
+
+    // Serialise SVG → blob URL → draw onto offscreen canvas
+    const svgStr  = new XMLSerializer().serializeToString(svg);
+    const svgBlob = new Blob([svgStr],{type:'image/svg+xml;charset=utf-8'});
+    const svgUrl  = URL.createObjectURL(svgBlob);
+
+    const offscreen = document.createElement('canvas');
+    offscreen.width = bw; offscreen.height = bh;
+    const ctx = offscreen.getContext('2d');
+
+    const svgImg = new Image();
+    svgImg.onload=()=>{
+      ctx.drawImage(svgImg,0,0,bw,bh);
+      URL.revokeObjectURL(svgUrl);
+      // Now draw the student's sketch on top
+      if(cvs && cvs.width>0 && cvs.height>0 && canvasState[molId]?.hasContent){
+        ctx.drawImage(cvs,0,0,bw,bh);
+      }
+      resolve(offscreen.toDataURL('image/png'));
+    };
+    svgImg.onerror=()=>{
+      URL.revokeObjectURL(svgUrl);
+      // Fallback: just the drawing
+      resolve(cvs?cvs.toDataURL('image/png'):null);
+    };
+    svgImg.src = svgUrl;
+  });
+}
+
+async function submitWork(){
   const n=document.getElementById('sName').value.trim()||'Student';
+
+  // Pre-render all mol composites (SVG + drawing) before cloning DOM
+  const composites={};
+  const allIds=[...mols.map(m=>m.id),'ch3cl'];
+  await Promise.all(allIds.map(async id=>{
+    composites[id]=await compositeMolImage(id);
+  }));
+
   const clone=document.documentElement.cloneNode(true);
   clone.querySelectorAll('input[id]:not([type=radio]):not([type=file])').forEach(el=>{const o=document.getElementById(el.id);if(o)el.setAttribute('value',o.value)});
   clone.querySelectorAll('textarea[id]').forEach(el=>{const o=document.getElementById(el.id);if(o)el.textContent=o.value});
   clone.querySelectorAll('select[id]').forEach(el=>{const o=document.getElementById(el.id);if(o)[...el.options].forEach((opt,i)=>{opt.selected=o.options[i]?.selected||false})});
   clone.querySelectorAll('input[type=radio]').forEach(el=>{const o=document.querySelector(`input[name="${el.name}"][value="${el.value}"]`);if(o&&o.checked)el.setAttribute('checked','')});
-  mols.forEach(m=>{const oc=document.getElementById('canvas-'+m.id);const cc=clone.querySelector('#canvas-'+m.id);if(oc&&cc){const img=document.createElement('img');img.src=oc.toDataURL();img.style.cssText='width:100%;display:block;border:1.5px solid #ddd8f0';img.setAttribute('data-mol',m.id);cc.parentNode.replaceChild(img,cc)}});
+
+  // Replace each mol-overlay-wrap (SVG + canvas) with the composited image
+  allIds.forEach(id=>{
+    const wrap=clone.querySelector('#wrap-'+id);
+    if(!wrap)return;
+    const dataUrl=composites[id];
+    const img=document.createElement('img');
+    if(dataUrl){
+      img.src=dataUrl;
+    } else {
+      // No composite — fall back to canvas-only
+      const oc=document.getElementById('canvas-'+id);
+      img.src=oc?oc.toDataURL('image/png'):'';
+    }
+    img.style.cssText='width:100%;display:block;border-radius:6px';
+    img.setAttribute('data-mol',id);
+    wrap.parentNode.replaceChild(img,wrap);
+  });
+
   clone.querySelectorAll('.resize-h,.toolbar,#cbBanner').forEach(el=>el.remove());
   clone.querySelectorAll('.hbtn').forEach(el=>el.remove());
   clone.querySelectorAll('input[type=file]').forEach(el=>el.remove());
