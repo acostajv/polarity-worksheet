@@ -2353,7 +2353,7 @@ async function submitWork(){
   const clone=document.documentElement.cloneNode(true);
   clone.querySelectorAll('input[id]:not([type=radio]):not([type=file])').forEach(el=>{const o=document.getElementById(el.id);if(o)el.setAttribute('value',o.value)});
   clone.querySelectorAll('textarea[id]').forEach(el=>{const o=document.getElementById(el.id);if(o)el.textContent=o.value});
-  clone.querySelectorAll('select[id]').forEach(el=>{const o=document.getElementById(el.id);if(o)[...el.options].forEach((opt,i)=>{opt.selected=o.options[i]?.selected||false})});
+  clone.querySelectorAll('select[id]').forEach(el=>{const o=document.getElementById(el.id);if(!o)return;[...el.options].forEach((opt,i)=>{const live=o.options[i];if(live?.selected){opt.setAttribute('selected','');}else{opt.removeAttribute('selected');}});});
   clone.querySelectorAll('input[type=radio]').forEach(el=>{const o=document.querySelector(`input[name="${el.name}"][value="${el.value}"]`);if(o&&o.checked)el.setAttribute('checked','')});
 
   // Replace each mol-overlay-wrap (SVG + canvas) with the composited image
