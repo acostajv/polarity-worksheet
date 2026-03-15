@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Molecular Polarity — Model Kit Activity</title>
+<title>Molecular Polarity — Model Kit Activity (Honors Chemistry)</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -474,7 +474,7 @@ textarea.ans{min-height:52px;line-height:1.6}
 <div class="hdr">
   <div class="hdr-l">
     <div class="hdr-title">Molecular Polarity — Model Kit Activity</div>
-    <div class="hdr-sub">Concordia Academy · Chemistry · Bond Polarity → Molecular Polarity</div>
+    <div class="hdr-sub">Concordia Academy · Honors Chemistry · Bond Polarity → Molecular Polarity</div>
   </div>
   <div class="hdr-meta">
     <div class="meta-row"><span class="meta-lbl">Name</span><input class="meta-in" id="sName" placeholder="Your name…"></div>
@@ -1227,7 +1227,7 @@ textarea.ans{min-height:52px;line-height:1.6}
 
           <div class="fc-step">
             <div class="fc-step-hdr"><span class="fc-n">1</span><span class="fc-q">Do the bonds in <strong>CH₃Cl</strong> have ΔEN ≥ 0.4?</span></div>
-            <div class="fc-hint">There are two different bond types here — check C–H and C–Cl separately.</div>
+            <div class="fc-hint">There are two different bond types here. C–H ΔEN = <span class="den-ref" id="denref-ch-ch3cl">—</span> (from Section 1). C–Cl ΔEN ≈ 0.5 (Cl EN = 3.0, C EN = 2.5).</div>
             <div class="radio-row">
               <label class="r-opt"><input type="radio" name="pbond-ch3cl" value="yes"> Yes — bonds are polar (ΔEN ≥ 0.4)</label>
               <label class="r-opt"><input type="radio" name="pbond-ch3cl" value="borderline"> Mixed — some borderline, some polar</label>
@@ -1493,6 +1493,10 @@ bonds.forEach(b => {
     const el=document.getElementById('den-'+b.id);
     if(!isNaN(v1)&&!isNaN(v2)) el.textContent=Math.abs(v1-v2).toFixed(1);
     else el.textContent='—';
+    // Update any den-ref spans in section 4 that reference this bond
+    document.querySelectorAll(`.den-ref[id^="denref-${b.id}-"]`).forEach(span=>{
+      span.textContent=el.textContent;
+    });
     saveAll();
   }
   document.getElementById('en1-'+b.id).addEventListener('input',recalc);
@@ -1734,14 +1738,14 @@ const molFacts = {
 
 // ── MOLECULE DATA (Section 2) ──
 const mols = [
-  {id:'co2',  formula:'CO₂',  name:'Carbon Dioxide',           geo:'linear',              bondsInfo:'C–O (×2)',   polarBond:true,  note:'Both C–O bonds are polar. Draw dipole arrows on the reference diagram — arrows on each C=O bond pointing toward O.'},
-  {id:'bf3',  formula:'BF₃',  name:'Boron Trifluoride',        geo:'trigonal planar',      bondsInfo:'B–F (×3)',   polarBond:true,  note:'B–F bonds have high ΔEN (2.0). Draw 3 arrows on the reference diagram pointing outward from B toward each F.'},
-  {id:'ch4',  formula:'CH₄',  name:'Methane',                  geo:'tetrahedral',          bondsInfo:'C–H (×4)',   polarBond:false, note:'C–H bonds are essentially nonpolar (ΔEN ≈ 0.4). No dipole arrows needed — just confirm the 3D tetrahedral shape.'},
-  {id:'nh3',  formula:'NH₃',  name:'Ammonia',                  geo:'trigonal pyramidal',   bondsInfo:'N–H (×3)',   polarBond:true,  note:'Sketch the pyramid shape. All three N–H dipole arrows point inward/upward toward N (the more EN atom).'},
-  {id:'h2o',  formula:'H₂O',  name:'Water',                    geo:'bent',                 bondsInfo:'O–H (×2)',   polarBond:true,  note:'Bent shape (~104.5°). Both O–H arrows point inward toward O. They do NOT point in exactly opposite directions.'},
-  {id:'sf6',  formula:'SF₆',  name:'Sulfur Hexafluoride',      geo:'octahedral',           bondsInfo:'S–F (×6)',   polarBond:true,  note:'Draw 6 S→F arrows on the diagram in 3 mutually perpendicular pairs. Notice how every arrow has an equal and opposite partner.'},
-  {id:'brf5', formula:'BrF₅', name:'Bromine Pentafluoride',    geo:'square pyramidal',     bondsInfo:'Br–F (×5)',  polarBond:true,  note:'Square pyramidal — one lone pair in lower axial position. Draw 5 Br→F arrows. Note the asymmetry compared to SF₆.'},
-  {id:'xef4', formula:'XeF₄', name:'Xenon Tetrafluoride',      geo:'square planar',        bondsInfo:'Xe–F (×4)',  polarBond:true,  note:'Square planar. Draw 4 Xe→F arrows. The two axial lone pairs (above and below) cancel each other out.'},
+  {id:'co2',  bondIds:['co'],        formula:'CO₂',  name:'Carbon Dioxide',           geo:'linear',              bondsInfo:'C–O (×2)',   polarBond:true,  note:'Both C–O bonds are polar. Draw dipole arrows on the reference diagram — arrows on each C=O bond pointing toward O.'},
+  {id:'bf3',  bondIds:['bf'],        formula:'BF₃',  name:'Boron Trifluoride',        geo:'trigonal planar',      bondsInfo:'B–F (×3)',   polarBond:true,  note:'B–F bonds have high ΔEN (2.0). Draw 3 arrows on the reference diagram pointing outward from B toward each F.'},
+  {id:'ch4',  bondIds:['ch'],        formula:'CH₄',  name:'Methane',                  geo:'tetrahedral',          bondsInfo:'C–H (×4)',   polarBond:false, note:'C–H bonds are essentially nonpolar (ΔEN ≈ 0.4). No dipole arrows needed — just confirm the 3D tetrahedral shape.'},
+  {id:'nh3',  bondIds:['nh'],        formula:'NH₃',  name:'Ammonia',                  geo:'trigonal pyramidal',   bondsInfo:'N–H (×3)',   polarBond:true,  note:'Sketch the pyramid shape. All three N–H dipole arrows point inward/upward toward N (the more EN atom).'},
+  {id:'h2o',  bondIds:['oh'],        formula:'H₂O',  name:'Water',                    geo:'bent',                 bondsInfo:'O–H (×2)',   polarBond:true,  note:'Bent shape (~104.5°). Both O–H arrows point inward toward O. They do NOT point in exactly opposite directions.'},
+  {id:'sf6',  bondIds:['sf'],        formula:'SF₆',  name:'Sulfur Hexafluoride',      geo:'octahedral',           bondsInfo:'S–F (×6)',   polarBond:true,  note:'Draw 6 S→F arrows on the diagram in 3 mutually perpendicular pairs. Notice how every arrow has an equal and opposite partner.'},
+  {id:'brf5', bondIds:['brf'],       formula:'BrF₅', name:'Bromine Pentafluoride',    geo:'square pyramidal',     bondsInfo:'Br–F (×5)',  polarBond:true,  note:'Square pyramidal — one lone pair in lower axial position. Draw 5 Br→F arrows. Note the asymmetry compared to SF₆.'},
+  {id:'xef4', bondIds:['xef'],       formula:'XeF₄', name:'Xenon Tetrafluoride',      geo:'square planar',        bondsInfo:'Xe–F (×4)',  polarBond:true,  note:'Square planar. Draw 4 Xe→F arrows. The two axial lone pairs (above and below) cancel each other out.'},
 ];
 
 const molCards = document.getElementById('molCards');
@@ -1830,7 +1834,7 @@ mols.forEach(m => {
 
         <div class="fc-step">
           <div class="fc-step-hdr"><span class="fc-n">1</span><span class="fc-q">Do the bonds in <strong>${m.formula}</strong> have ΔEN ≥ 0.4?</span></div>
-          <div class="fc-hint">Check your Section 1 table — look up the EN values for the atoms and calculate ΔEN.</div>
+          <div class="fc-hint">From your Section 1 table: ${(m.bondIds||[]).map(bid=>{const b=bonds.find(x=>x.id===bid);return b?`<strong>${b.a1}–${b.a2} ΔEN = <span class="den-ref" id="denref-${bid}-${m.id}">—</span></strong>`:'';}).join(' &nbsp;·&nbsp; ')} <span style="color:var(--muted);font-size:10.5px">(enter EN values in Section 1 to see this)</span></div>
           <div class="radio-row">
             <label class="r-opt"><input type="radio" name="pbond-${m.id}" value="yes"> Yes — bonds are polar (ΔEN ≥ 0.4)</label>
             <label class="r-opt"><input type="radio" name="pbond-${m.id}" value="borderline"> Borderline (ΔEN ≈ 0.4)</label>
